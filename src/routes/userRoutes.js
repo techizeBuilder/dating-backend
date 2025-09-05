@@ -15,6 +15,7 @@ import {
   deleteUser,
   videoCall,
   saveCallLog,
+  blockUser,
 } from "../controllers/userController.js";
 import {
   setupProfile,
@@ -115,5 +116,7 @@ router.get("/:id", getUser);
 router.post("/", createUser);
 router.put("/:id", updateUser);
 router.delete("/:id", deleteUser);
+
+router.post("/:id/block", blockUser);
 
 export default router;

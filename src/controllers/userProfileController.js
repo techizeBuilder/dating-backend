@@ -79,7 +79,7 @@ export const getMatches = async (req, res) => {
     const query = {
       _id: {
         $ne: req.user.id,
-        $nin: user.likedUsers,
+        $nin: [...user.likedUsers, ...user.blockedUsers],
       },
       status: "active",
       i_am:

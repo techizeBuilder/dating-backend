@@ -120,6 +120,40 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+// Block user
+export const blockUser = async (req, res) => {
+  try {
+    const userToBeBlocked = await User.findById(req.params.id);
+    console.log(req.params.id);
+
+    if (!userToBeBlocked) {
+      return res.status(404).json({
+        status: false,
+        message: "User doesn't exist",
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $addToSet: { blockedUsers: req.params.id }, // prevents duplicates
+      },
+      { new: true }
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "User blocked successfully",
+      blockedUsers: updatedUser.blockedUsers,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message,
+    });
+  }
+};
+
 //videocall route
 export const videoCall = async (req, res) => {
   try {

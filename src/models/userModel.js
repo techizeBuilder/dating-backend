@@ -187,6 +187,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
     likedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     report: {
       reported_count: {
