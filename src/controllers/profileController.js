@@ -63,6 +63,8 @@ export const getProfile = async (req, res) => {
 
 export const deleteAccount = async (req, res) => {
   try {
+    console.log("Delete Req came");
+    console.log({ user: req.user });
     const userId = req.user._id;
 
     // Delete user and related data
