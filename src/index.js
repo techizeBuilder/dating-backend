@@ -74,7 +74,7 @@ app.use("/api/location", locationRoutes);
 
 // Basic route
 app.get("/", (req, res) => {
-  res.json({ message: "Dating ki API runing hai" });
+  res.json({ message: "Dating API is running ✅" });
 });
 
 // Global error handling middleware
