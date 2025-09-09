@@ -1,6 +1,7 @@
 import Message from "../models/chatModel.js";
 import User from "../models/userModel.js";
 import { io } from "../index.js";
+import { sendPushNotification } from "../services/notification-services.js";
 
 // Get userslists of the chat
 export const getChatUsers = async (req, res) => {
@@ -141,6 +142,24 @@ export const sendMessage = async (req, res) => {
       message: type === "text" ? message : req.file.originalname,
       file_url: fileUrl,
     });
+
+    // Find user by receiver_id
+    const receiverUser = await User.findById(receiver_id);
+    if (!receiverUser) {
+      return res.status(404).json({
+        status: false,
+        message: "Receiver user not found",
+      });
+    }
+
+    if (receiverUser.pushNotificationTokens.length > 0) {
+      // Send push notification to the receiver
+      sendPushNotification(receiverUser.pushNotificationTokens, {
+        title: `${req.user.name} sent you a message`,
+        message:
+          type === "text" ? message : `You have received a new ${type} file.`,
+      });
+    }
 
     // Emit the new message to the receiver via Socket.IO
     if (io) {

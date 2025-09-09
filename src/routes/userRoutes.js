@@ -16,6 +16,7 @@ import {
   videoCall,
   saveCallLog,
   blockUser,
+  savePushNotificationToken,
 } from "../controllers/userController.js";
 import {
   setupProfile,
@@ -118,5 +119,8 @@ router.put("/:id", updateUser);
 router.delete("/:id", deleteUser);
 
 router.post("/:id/block", blockUser);
+
+// NotificationToken
+router.post("/notification-token", savePushNotificationToken);
 
 export default router;

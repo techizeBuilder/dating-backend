@@ -15,6 +15,7 @@
     "cors": "^2.8.5",
     "date-fns": "^3.0.6",
     "dotenv": "^16.3.1",
+    "expo-server-sdk": "^4.0.0",
     "express": "^4.21.2",
     "express-rate-limit": "^7.1.5",
     "fs": "^0.0.1-security",

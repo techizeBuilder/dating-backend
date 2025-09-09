@@ -1,4 +1,5 @@
 import User from "../models/userModel.js";
+import { sendPushNotification } from "../services/notification-services.js";
 
 export const setupProfile = async (req, res) => {
   try {
@@ -331,6 +332,21 @@ export const likeUser = async (req, res) => {
 
     // Check for match (mutual like)
     const isMutual = userToLike.likedUsers.includes(currentUserId);
+
+    if (isMutual) {
+      // Send notification to the userIdTobeLiked about the match
+      console.log(`It's a match between ${user.name} and ${userToLike.name}!`);
+      // Here you would integrate with your notification service
+      // Fetch the Expo push tokens
+      const expoPushTokens = userToLike.pushNotificationTokens || [];
+      console.log("expoPushTokens", expoPushTokens);
+      if (expoPushTokens.length > 0) {
+        sendPushNotification(expoPushTokens, {
+          title: "It's a Match!",
+          message: `${user.name} liked you back!`,
+        });
+      }
+    }
 
     res.status(200).json({
       message: isMutual ? "It's a match!" : "User liked successfully.",

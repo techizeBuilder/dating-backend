@@ -85,6 +85,10 @@ const userSchema = new mongoose.Schema(
       unique: true,
       // match: [/^\+?[1-9]\d{1,14}$/, 'Please enter a valid mobile number']
     },
+    pushNotificationTokens: {
+      type: [String],
+      default: [],
+    },
     country_code: {
       type: String,
       required: false,

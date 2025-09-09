@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import genrateRtcToken from "../utils/agoraTokenGenerator.js";
 import UserSubscription from "../models/userSubscriptionModel.js";
 import CallLog from "../models/callLog.js";
+import { Expo } from "expo-server-sdk";
 
 const generateToken = (id) => {
   if (!process.env.JWT_SECRET) {
@@ -11,6 +12,66 @@ const generateToken = (id) => {
   return jwt.sign({ id: id.toString() }, process.env.JWT_SECRET, {
     expiresIn: "30d",
   });
+};
+
+// Save Push Notification Token
+export const savePushNotificationToken = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { notificationToken } = req.body;
+
+    console.log("Received notification token: ", { userId, notificationToken });
+
+    if (!notificationToken) {
+      return res.status(400).json({
+        status: false,
+        message: "Notification token is required",
+      });
+    }
+
+    // Validate the token format (basic validation)
+    if (!Expo.isExpoPushToken(notificationToken)) {
+      console.error(
+        `Push token ${notificationToken} is not a valid Expo push token`
+      );
+      return res.status(400).json({
+        status: false,
+        message: "Invalid notification token format",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    if (!Array.isArray(user.pushNotificationTokens)) {
+      user.pushNotificationTokens = [];
+    }
+
+    // Avoid duplicate tokens
+    if (!user.pushNotificationTokens.includes(notificationToken)) {
+      user.pushNotificationTokens.push(notificationToken);
+    }
+
+    console.log({ pushTokens: user.pushNotificationTokens });
+
+    await user.save();
+
+    res.status(200).json({
+      status: true,
+      message: "Notification token saved successfully",
+    });
+  } catch (error) {
+    console.error("Error saving notification token:", error);
+    res.status(500).json({
+      status: false,
+      message: error.message,
+    });
+  }
 };
 
 // Get all users
