@@ -2,6 +2,7 @@ import Message from "../models/chatModel.js";
 import User from "../models/userModel.js";
 import { io } from "../index.js";
 import { sendPushNotification } from "../services/notification-services.js";
+import { activeChatPartners } from "../sockets/state.js";
 
 // Get userslists of the chat
 export const getChatUsers = async (req, res) => {
@@ -152,13 +153,39 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    if (receiverUser.pushNotificationTokens.length > 0) {
-      // Send push notification to the receiver
-      sendPushNotification(receiverUser.pushNotificationTokens, {
-        title: `${req.user.name} sent you a message`,
-        message:
-          type === "text" ? message : `You have received a new ${type} file.`,
-      });
+    const pushTokens = Array.isArray(receiverUser.pushNotificationTokens)
+      ? receiverUser.pushNotificationTokens
+      : [];
+    if (pushTokens.length > 0) {
+      // Skip push notification if receiver is actively chatting with this sender
+      const activePartner = activeChatPartners.get(String(receiver_id));
+      const shouldSkip =
+        activePartner && String(activePartner) === String(senderId);
+      console.log(
+        "[Push Debug] receiver=",
+        String(receiver_id),
+        "activePartner=",
+        activePartner,
+        "senderId=",
+        String(senderId),
+        "shouldSkip=",
+        shouldSkip,
+        "tokens=",
+        pushTokens
+      );
+      if (!shouldSkip) {
+        sendPushNotification(pushTokens, {
+          title: `${req.user.name} sent you a message`,
+          message:
+            type === "text" ? message : `You have received a new ${type} file.`,
+          data: {
+            type: "chat_message",
+            senderId: String(senderId),
+          },
+        });
+      } else {
+        console.log("[Push Debug] Skipped push: user is in active chat with sender");
+      }
     }
 
     // Emit the new message to the receiver via Socket.IO

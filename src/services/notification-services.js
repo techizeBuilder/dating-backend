@@ -17,19 +17,21 @@ export async function sendPushNotification(pushTokens, data) {
       sound: "default",
       title: data.title || "New Message",
       body: data.message,
-      data: { extraData: "Some extra data" },
+      data: data.data || {},
     });
   }
 
+  console.log("[Push Debug] Sending Expo pushes:", messages);
   let chunks = expo.chunkPushNotifications(messages);
   let tickets = [];
 
   for (let chunk of chunks) {
     try {
       let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+      console.log("[Push Debug] Tickets:", ticketChunk);
       tickets.push(...ticketChunk);
     } catch (error) {
-      console.error(error);
+      console.error("[Push Debug] Error sending push chunk:", error);
     }
   }
 

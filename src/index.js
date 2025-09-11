@@ -6,6 +6,14 @@ import fs from "fs";
 
 import http from "http";
 import { Server as SocketServer } from "socket.io";
+import {
+  onlineUsers,
+  activeChatPartners,
+  pendingInvitations,
+  pendingAnswers,
+  activeGames,
+  activeCalls,
+} from "./sockets/state.js";
 
 import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -114,11 +122,7 @@ export const io = new SocketServer(server, {
 });
 
 // Track online users
-const onlineUsers = new Map();
-const pendingInvitations = new Map();
-const pendingAnswers = new Map();
-const activeGames = new Map();
-const activeCalls = new Map();
+// moved to sockets/state.js
 
 // Socket.IO logic - Update the messageRead handler
 io.on("connection", (socket) => {
@@ -127,6 +131,8 @@ io.on("connection", (socket) => {
   socket.on("join", (userId) => {
     // Store the user's socket connection
     onlineUsers.set(userId, socket.id);
+    // Keep the userId on the socket for later reference
+    socket.userId = userId;
 
     socket.join(userId);
     console.log(`User ${userId} joined their room`);
@@ -137,6 +143,32 @@ io.on("connection", (socket) => {
     // Send the current user a list of who's online
     const currentlyOnline = Array.from(onlineUsers.keys());
     socket.emit("onlineUsers", currentlyOnline);
+  });
+
+  // Mark the chat partner the user is actively viewing
+  socket.on("setActiveChat", (partnerUserId) => {
+    try {
+      const currentUserId = socket.userId;
+      if (!currentUserId) return;
+      if (partnerUserId) {
+        activeChatPartners.set(currentUserId, String(partnerUserId));
+      } else {
+        activeChatPartners.delete(currentUserId);
+      }
+    } catch (e) {
+      console.error("Error setting active chat:", e);
+    }
+  });
+
+  // Clear active chat on explicit leave
+  socket.on("clearActiveChat", () => {
+    try {
+      const currentUserId = socket.userId;
+      if (!currentUserId) return;
+      activeChatPartners.delete(currentUserId);
+    } catch (e) {
+      console.error("Error clearing active chat:", e);
+    }
   });
 
   // Handle online status check
@@ -517,6 +549,8 @@ io.on("connection", (socket) => {
         // Remove from online users
         onlineUsers.delete(userId);
         io.emit("userOffline", userId);
+        // Clear any active chat tracking for this user
+        activeChatPartners.delete(userId);
         // Handle active call cleanup
         if (activeCalls.has(userId)) {
           const callData = activeCalls.get(userId);
